@@ -10,6 +10,7 @@ from Pop3 import Pop3Client
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
+        self.pop3 = Pop3Client(self)
 
         self.accountInfo = '' # mail adress : self.accountInfo["login"]  password : self.accountInfo["password"]
     
@@ -75,11 +76,37 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Logout button
         self.logoutButton = QPushButton('Log out', self)
-        self.logoutButton.move(200,25)
+        self.logoutButton.move(0,25)
         self.logoutButton.setObjectName("logoutButton")
         self.logoutButton.hide()
         self.logoutButton.clicked.connect(self.logout)  
 
+        # Mails
+        self.listWidgetEmails = QtWidgets.QListWidget(self)
+        self.listWidgetEmails.setGeometry(QtCore.QRect(60, 90, 881, 521))
+        self.listWidgetEmails.setObjectName("listWidgetEmails")
+        self.listWidgetEmails.itemClicked.connect(self.showEmail)
+        self.listWidgetEmails.hide()
+
+        # Show mail 
+        self.mailTextBrowser = QtWidgets.QTextBrowser(self)
+        self.mailTextBrowser.setGeometry(QtCore.QRect(60, 90, 900, 600))
+        self.mailTextBrowser.setFontPointSize(25)
+        self.mailTextBrowser.setObjectName("mailTextBrowser")
+        self.mailTextBrowser.hide()
+
+        # Button to go back to main window
+        self.backToMainButton = QPushButton('<--', self)
+        self.backToMainButton.move(500, 25)
+        self.backToMainButton.hide()
+        self.backToMainButton.clicked.connect(self.goBack)
+        
+        # Refresh mails
+        self.refreshButton = QPushButton('Refresh', self)
+        self.refreshButton.move(800, 25)
+        self.refreshButton.clicked.connect(self.pop3.getEmails)
+
+ 
         # Main window configurations
         self.resize(1024, 768)
         self.center()
@@ -90,15 +117,14 @@ class MainWindow(QtWidgets.QMainWindow):
     # Log in POP3
     def login(self):
         sender = self.sender()
-        pop = Pop3Client(main)
-        login = LoginDialog(parent=self, pop3=pop, parentWindow=main)
+        login = LoginDialog(parent=self, pop3=self.pop3, parentWindow=main)
         login.show()
         if not login.exec_(): 
             self.statusBar().showMessage('Log in cancelled')
     
     # Shows send mail dialog
     def sendMail(self):
-        sendMail = SendMailDialog()
+        sendMail = SendMailDialog(parent=main)
         # SMTP
         sendMail.exec_()
         sendMail.show()
@@ -106,9 +132,15 @@ class MainWindow(QtWidgets.QMainWindow):
     # TODO Log out
     def logout(self):
         self.logoutButton.hide()
+        self.loginButton.show()
+        self.pop3.quit()
         self.loginButton.setText('Log in')
+        self.listWidgetEmails.clear()
+        self.listWidgetEmails.hide()
         self.statusBar().showMessage('Logged out')
 
+    # Disabled for testing
+    """
     # Asking to quit
     def closeEvent(self, event):
         # Message box
@@ -118,6 +150,7 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
         else:
             event.ignore()    
+    """
 
     # To center window on start
     def center(self):
@@ -131,14 +164,23 @@ class MainWindow(QtWidgets.QMainWindow):
             self.statusbar.show()
         else:
             self.statusbar.hide()
-        
+
+    def showEmail(self):
+        self.pop3.retrieveMail(self.listWidgetEmails.currentItem().text(), self)
+
+        self.listWidgetEmails.hide()
+        self.mailTextBrowser.show()
+        self.backToMainButton.show()
+    
+    def goBack(self):
+        self.listWidgetEmails.show()
+        self.mailTextBrowser.hide()
+        self.backToMainButton.hide()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
     main = MainWindow()
-
     main.show()
 
     sys.exit(app.exec_())

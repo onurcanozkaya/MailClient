@@ -9,8 +9,11 @@ class SendMailDialog(QtWidgets.QDialog):
     
     def __init__(self, parent=None):
         super(SendMailDialog, self).__init__(parent)
+        self.parentWindow = parent
         
         sender = QLabel('From:')
+        senderAddr = QLabel('')
+        senderAddr.setText(self.parentWindow.accountInfo["login"])
         to = QLabel('To:')
         subject = QLabel('Subject:')
         mailContent = QLabel('Message:')
@@ -23,6 +26,7 @@ class SendMailDialog(QtWidgets.QDialog):
         grid.setSpacing(10)
 
         grid.addWidget(sender, 1, 0)
+        grid.addWidget(senderAddr, 1, 1)
 
         grid.addWidget(to, 2, 0)
         grid.addWidget(toEdit, 2, 1)
@@ -47,7 +51,7 @@ class SendMailDialog(QtWidgets.QDialog):
     def sendEmail(self):
       
         sender = self.sender()
-        #self.statusBar().showMessage('Sending mail.')
+        self.parentWindow.statusBar().showMessage('Sending mail.')
     
     def exception(exctype, value, traceback):
         # Print the error and traceback

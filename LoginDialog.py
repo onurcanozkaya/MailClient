@@ -34,27 +34,15 @@ class LoginDialog(QDialog):
         layout.addWidget(self.buttons)
         self.resize(400, 100)
         self.setLayout(layout)
+    
 
     def check(self):
         # Login check
+        self.loginStatus = 0
         try:
-            loginStatus = self.pop3client.login(self.popServer.text(), self.popServerPort.text(), self.smtpServer.text(), self.smtpServerPort.text(), self.username.text(), self.password.text()) 
+            self.loginStatus = self.pop3client.login(self.popServer.text(), self.popServerPort.text(), self.smtpServer.text(), self.smtpServerPort.text(), self.username.text(), self.password.text()) 
 
-            if loginStatus: 
-                self.pop3client.getEmails(self.mainWindow)
-
-                self.mainWindow.statusBar().showMessage('Logged in as ' + self.username.text())
-                self.mainWindow.logoutButton.show()
-
-                self.mainWindow.accountInfo = {
-                    "popServer": self.popServer.text(),
-                    "popPort": self.popServerPort.text(),
-                    "smtpServer": self.smtpServer.text(),
-                    "smtpPort": self.smtpServerPort.text(),
-                    "login": self.username.text(),
-                    "password": self.password.text()
-                }
-
+            if self.loginStatus: 
                 self.accept()
             else:
                 QMessageBox.warning(
@@ -62,6 +50,23 @@ class LoginDialog(QDialog):
                 pass 
         except:
             QMessageBox.warning(self, 'Error', 'Bad user or password') 
+
+        # If login successful request emails
+        if self.loginStatus:
+            self.pop3client.getEmails()
+
+            self.mainWindow.statusBar().showMessage('Logged in as ' + self.username.text())
+            self.mainWindow.logoutButton.show()
+
+            # Save login configuration to use with smtp
+            self.mainWindow.accountInfo = {
+                "popServer": self.popServer.text(),
+                "popPort": self.popServerPort.text(),
+                "smtpServer": self.smtpServer.text(),
+                "smtpPort": self.smtpServerPort.text(),
+                "login": self.username.text(),
+                "password": self.password.text()
+            }
             
 
     def exception(exctype, value, traceback):
