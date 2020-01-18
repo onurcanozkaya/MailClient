@@ -49,6 +49,8 @@ class LoginDialog(QDialog):
                     self, 'Error', 'Bad user or password')
                 pass 
         except:
+            e = sys.exc_info()[0]
+            print(e)
             QMessageBox.warning(self, 'Error', 'Bad user or password') 
 
         # If login successful request emails
@@ -56,7 +58,9 @@ class LoginDialog(QDialog):
             self.pop3client.getEmails()
 
             self.mainWindow.statusBar().showMessage('Logged in as ' + self.username.text())
+            self.mainWindow.sendMailButton.show()
             self.mainWindow.logoutButton.show()
+            self.mainWindow.refreshButton.show()
 
             # Save login configuration to use with smtp
             self.mainWindow.accountInfo = {

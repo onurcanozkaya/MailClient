@@ -72,7 +72,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.sendMailButton = QPushButton('Send Mail', self)
         self.sendMailButton.setToolTip('Click to send mail')
         self.sendMailButton.move(100,25)
-        self.sendMailButton.clicked.connect(self.sendMail)      
+        self.sendMailButton.clicked.connect(self.sendMail)     
+        self.sendMailButton.hide() 
 
         # Logout button
         self.logoutButton = QPushButton('Log out', self)
@@ -89,24 +90,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.listWidgetEmails.hide()
 
         # Show mail 
-        self.mailTextBrowser = QtWidgets.QTextBrowser(self)
-        self.mailTextBrowser.setGeometry(QtCore.QRect(60, 90, 900, 600))
-        self.mailTextBrowser.setFontPointSize(25)
-        self.mailTextBrowser.setObjectName("mailTextBrowser")
-        self.mailTextBrowser.hide()
+        self.textBrowserShowMail = QtWidgets.QTextBrowser(self)
+        self.textBrowserShowMail.setGeometry(QtCore.QRect(60, 90, 900, 600))
+        self.textBrowserShowMail.setFontPointSize(25)
+        self.textBrowserShowMail.setObjectName("textBrowserShowMail")
+        self.textBrowserShowMail.hide()
 
         # Button to go back to main window
         self.backToMainButton = QPushButton('<--', self)
         self.backToMainButton.move(500, 25)
         self.backToMainButton.hide()
         self.backToMainButton.clicked.connect(self.goBack)
+
+        # Button to delete email
+        self.deleteMailButton = QPushButton('Delete mail', self)
+        self.deleteMailButton.move(600, 25)
+        self.deleteMailButton.hide()
+        self.deleteMailButton.clicked.connect(self.deleteMailClicked)
         
         # Refresh mails
         self.refreshButton = QPushButton('Refresh', self)
+        self.refreshButton.hide()
         self.refreshButton.move(800, 25)
         self.refreshButton.clicked.connect(self.pop3.getEmails)
 
- 
         # Main window configurations
         self.resize(1024, 768)
         self.center()
@@ -137,7 +144,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loginButton.setText('Log in')
         self.listWidgetEmails.clear()
         self.listWidgetEmails.hide()
+        self.refreshButton.hide()
         self.statusBar().showMessage('Logged out')
+        self.labelNumEmails.hide()
+        self.textBrowserNumEmails.setText('0')
+        self.textBrowserNumEmails.hide()
+        self.textBrowserShowMail.hide()
+        self.refreshButton.hide()
+        self.backToMainButton.hide()
+        self.deleteMailButton.hide()
+        self.sendMailButton.hide()
 
     # Disabled for testing
     """
@@ -169,15 +185,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pop3.retrieveMail(self.listWidgetEmails.currentItem().text(), self)
 
         self.listWidgetEmails.hide()
-        self.mailTextBrowser.show()
+        self.textBrowserShowMail.show()
+        self.refreshButton.hide()
         self.backToMainButton.show()
+        self.deleteMailButton.show()
     
     def goBack(self):
         self.listWidgetEmails.show()
-        self.mailTextBrowser.hide()
+        self.textBrowserShowMail.hide()
         self.backToMainButton.hide()
+        self.deleteMailButton.hide()
 
-
+    def deleteMailClicked(self):
+        deleteSuccess = self.pop3.deleteEmail(self.listWidgetEmails.currentItem().text())
+        if deleteSuccess:
+            self.listWidgetEmails.takeItem(self.listWidgetEmails.currentRow())
+            self.goBack()
+        else: 
+            QMessageBox.warning(self, 'Error', 'Error while deleting the email')
+    
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     main = MainWindow()
