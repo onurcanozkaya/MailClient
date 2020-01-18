@@ -5,12 +5,14 @@ from PyQt5.QtGui import QIcon, QFont
 from SendMailDialog import SendMailDialog as SendMailDialog
 from LoginDialog import LoginDialog as LoginDialog
 from Pop3 import Pop3Client
+from Smtp import SmtpClient
 
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.pop3 = Pop3Client(self)
+        self.smtp = SmtpClient(self)
 
         self.accountInfo = '' # mail adress : self.accountInfo["login"]  password : self.accountInfo["password"]
     
@@ -131,7 +133,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
     # Shows send mail dialog
     def sendMail(self):
-        sendMail = SendMailDialog(parent=main)
+        sendMail = SendMailDialog(smtp=self.smtp, parent=main)
         # SMTP
         sendMail.exec_()
         sendMail.show()
