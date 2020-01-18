@@ -218,6 +218,8 @@ class Pop3Client():
         self.ssl_sock = wrap_socket(sock)
         self.ssl_sock.settimeout(TIMEOUT)
 
+  
+
         # to test UI
         self.accInfo = {
             "popServer": popServer,

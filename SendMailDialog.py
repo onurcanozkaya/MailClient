@@ -2,7 +2,7 @@
 
 import sys
 from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton)
+from PyQt5.QtWidgets import (QWidget, QMessageBox, QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton)
 
 
 class SendMailDialog(QtWidgets.QDialog):
@@ -51,10 +51,24 @@ class SendMailDialog(QtWidgets.QDialog):
         self.show()
 
     def sendEmail(self):
-        sender = self.sender()
         self.parentWindow.statusBar().showMessage('Sending mail.')
-        self.smtpClient.login(self.parentWindow.accountInfo["smtpServer"], self.parentWindow.accountInfo["smtpPort"], self.parentWindow.accountInfo["login"], self.parentWindow.accountInfo["password"] )
-        self.smtpClient.sendEmail(self.senderAddr.text(), self.toEdit.text(), self.subjectEdit.text(), self.mailContentEdit.toPlainText())
+        #self.smtpClient.login(self.parentWindow.accountInfo["smtpServer"], self.parentWindow.accountInfo["smtpPort"], self.parentWindow.accountInfo["login"], self.parentWindow.accountInfo["password"] )
+        #self.smtpClient.sendEmail(self.senderAddr.text(), self.toEdit.text(), self.subjectEdit.text(), self.mailContentEdit.toPlainText())
+        response = self.smtpClient.send_email(
+                    self.parentWindow.accountInfo["smtpServer"], 
+                    self.parentWindow.accountInfo["smtpPort"], 
+                    self.parentWindow.accountInfo["login"], 
+                    self.parentWindow.accountInfo["password"],
+                    self.toEdit.text(), 
+                    self.subjectEdit.text(), 
+                    self.mailContentEdit.toPlainText())
+
+        if response:
+            self.hide()
+
+        else:
+            QMessageBox.warning(self, 'Error', 'Mail is not sent') 
+
     def exception(exctype, value, traceback):
         # Print the error and traceback
         print(exctype, value, traceback)
