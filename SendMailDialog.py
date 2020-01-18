@@ -7,35 +7,37 @@ from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout,
 
 class SendMailDialog(QtWidgets.QDialog):
     
-    def __init__(self, parent=None):
+    def __init__(self, smtp=None, parent=None):
         super(SendMailDialog, self).__init__(parent)
         self.parentWindow = parent
+
+        self.smtpClient = smtp
         
         sender = QLabel('From:')
-        senderAddr = QLabel('')
-        senderAddr.setText(self.parentWindow.accountInfo["login"])
+        self.senderAddr = QLabel('')
+        self.senderAddr.setText(self.parentWindow.accountInfo["login"])
         to = QLabel('To:')
         subject = QLabel('Subject:')
         mailContent = QLabel('Message:')
 
-        toEdit = QLineEdit()
-        subjectEdit = QLineEdit()
-        mailContentEdit = QTextEdit()
+        self.toEdit = QLineEdit()
+        self.subjectEdit = QLineEdit()
+        self.mailContentEdit = QTextEdit()
 
         grid = QGridLayout()
         grid.setSpacing(10)
 
         grid.addWidget(sender, 1, 0)
-        grid.addWidget(senderAddr, 1, 1)
+        grid.addWidget(self.senderAddr, 1, 1)
 
         grid.addWidget(to, 2, 0)
-        grid.addWidget(toEdit, 2, 1)
+        grid.addWidget(self.toEdit, 2, 1)
 
         grid.addWidget(subject, 3, 0)
-        grid.addWidget(subjectEdit, 3, 1)
+        grid.addWidget(self.subjectEdit, 3, 1)
 
         grid.addWidget(mailContent, 4, 0)
-        grid.addWidget(mailContentEdit, 4, 1, 5, 1)
+        grid.addWidget(self.mailContentEdit, 4, 1, 5, 1)
 
         sendButton = QPushButton('Send', self)
         sendButton.setToolTip('Are you sure to send this mail?')
@@ -49,10 +51,10 @@ class SendMailDialog(QtWidgets.QDialog):
         self.show()
 
     def sendEmail(self):
-      
         sender = self.sender()
         self.parentWindow.statusBar().showMessage('Sending mail.')
-    
+        self.smtpClient.login(self.parentWindow.accountInfo["smtpServer"], self.parentWindow.accountInfo["smtpPort"], self.parentWindow.accountInfo["login"], self.parentWindow.accountInfo["password"] )
+        self.smtpClient.sendEmail(self.senderAddr.text(), self.toEdit.text(), self.subjectEdit.text(), self.mailContentEdit.toPlainText())
     def exception(exctype, value, traceback):
         # Print the error and traceback
         print(exctype, value, traceback)
