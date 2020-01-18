@@ -1,4 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+
+import smtplib
 import socket
 import sys
 from ssl import wrap_socket
@@ -45,4 +47,17 @@ class SmtpClient():
     def sendEmail(self, fromUser, toUser, subject, mailContent):
         print('from user' + fromUser + toUser + subject + mailContent)
 
-
+    def send_email(self, smtpServer, smtpPort, login, password, toUser, subject, msg):
+        try: 
+            server=smtplib.SMTP(smtpServer + ':' + smtpPort)
+            server.ehlo()
+            server.starttls()
+            server.login(login, password)
+            message ='Subject: {}\n\n{}'.format (subject,msg)
+            server.sendmail(login, toUser, message)
+            server.quit()
+            print('success')
+            return 1
+        except:
+            print('Fail')
+            return 0
