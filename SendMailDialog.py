@@ -64,11 +64,7 @@ class SendMailDialog(QtWidgets.QDialog):
 
         if response:
             self.hide()
-
-        else:
-            QMessageBox.warning(self, 'Error', 'Mail is not sent') 
             self.parentWindow.statusBar().showMessage('Sent mail successfuly. Logged in as ' + self.parentWindow.accountInfo["login"])
-
 
         else:
             QMessageBox.warning(self, 'Error', 'Error while sending the email') 

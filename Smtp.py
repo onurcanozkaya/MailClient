@@ -13,7 +13,7 @@ class SmtpClient():
 
     def send_email(self, smtpServer, smtpPort, login, password, toUser, subject, msg):
         try: 
-            server=smtplib.SMTP_SSL(smtpServer + ':' + smtpPort)
+            server=smtplib.SMTP_SSL(smtpServer + ':' + str(smtpPort))
             server.ehlo()
             server.login(login, password)
             message ='Subject: {}\n\n{}'.format (subject,msg)
@@ -37,6 +37,4 @@ class SmtpClient():
             print('SMTP error occurred: '+ str(e))
             QtWidgets.QMessageBox.warning(self.QMainWindow, 'Error','SMTP error occurred: '+ str(e) )
 
-        except:
-            print('Fail')
-            return 0
+
