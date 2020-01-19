@@ -29,7 +29,6 @@ class LoginDialog(QDialog):
         loginLayout.addRow("SMTP Server", self.smtpServer)
         loginLayout.addRow("SMTP Server Port", self.smtpServerPort)
 
-
         self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttons.accepted.connect(self.check)
         self.buttons.rejected.connect(self.reject)
@@ -93,11 +92,10 @@ class LoginDialog(QDialog):
                 "login": self.username.text(),
                 "password": self.password.text()
             }
+    # If the user rejects log in
     def reject(self):
         self.mainWindow.loginButton.show()
         self.hide()
-
-            
 
     def exception(exctype, value, traceback):
         # Print the error and traceback

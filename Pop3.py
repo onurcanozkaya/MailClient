@@ -142,7 +142,6 @@ def extractEmailContent(email, window):
             except:
                 print('Error while saving attachment')
    
-
     window.textBrowserShowMail.setText(mailContent)
 
 # Get number of mails in the maildrop - STAT command
@@ -158,7 +157,6 @@ def numOfMails(sock):
 # List emails LIST command    
 def listEmails(sock, window):
     sock.send(('LIST' + CRLF).encode(ENCODING))
-
     listMailResponse = ''
 
     while True: 
@@ -194,7 +192,7 @@ def retranslateUILoggedIn(QMainWindow, username):
     #QMainWindow.statusBar().showMessage('Logged in pop3' + username)
 
 
-# Checks connection state with NOOP f.e Yandex POP returns -ERR for all commands after RETR command       
+# Checks connection state, sometimes pop server responds with -ERR during the connection  
 def checkConnectionState(sock, window):
     try:
         while True:
@@ -205,9 +203,6 @@ def checkConnectionState(sock, window):
         print('Connection is already closed')
         QtWidgets.QMessageBox.warning(window, 'Error', 'Bad user or password') 
     
-    
-
-
 class Pop3Client():
     def __init__(self, QMainWindow):
         self.QMainWindow = QMainWindow
@@ -221,7 +216,6 @@ class Pop3Client():
         self.ssl_sock = wrap_socket(sock)
         self.ssl_sock.settimeout(TIMEOUT)
 
-        # to test UI
         self.accInfo = {
             "popServer": popServer,
             "popPort": popPort,
@@ -242,6 +236,7 @@ class Pop3Client():
         if(data.startswith(b'+OK')):
             return True 
 
+    # Relogin to refresh emails
     def relogin(self):
         self.quit()
         self.loggedIn = self.login(self.accInfo["popServer"], self.accInfo["popPort"], self.accInfo["smtpServer"], self.accInfo["smtpPort"], self.accInfo["login"], self.accInfo["password"])
@@ -250,10 +245,7 @@ class Pop3Client():
         else:
             QtWidgets.QMessageBox.warning(self.QMainWindow, 'Error', 'Can not refresh emails')
  
-
-
-
-
+    # Retrieves mail headers
     def getEmails(self):
         try:
             if self.loggedIn:
@@ -305,6 +297,7 @@ class Pop3Client():
         except: 
             print('Error while quitting')
 
+    # If connection is not closed or aborted already
     def quitCheckOK(self):
         data = sendData(self.ssl_sock, 'QUIT' + CRLF)
         if(data.startswith(b'+OK')):
