@@ -304,12 +304,17 @@ def retranslateUILoggedIn(QMainWindow, username):
 
 
 # Checks connection state with NOOP f.e Yandex POP returns -ERR for all commands after RETR command       
-def checkConnectionState(sock):
-    check = sendData(sock, 'NOOP' + CRLF)
-    if b'OK' in check:
-        return True
-    else: 
-        return False
+def checkConnectionState(sock, window):
+    try:
+        while True:
+            check = sendData(sock, 'NOOP' + CRLF)
+            if b'OK' in check:
+                return True
+    except:
+        print('Connection is already closed')
+        QMessageBox.warning(window, 'Error', 'Bad user or password') 
+    
+    
 
 
 class Pop3Client():
@@ -377,13 +382,13 @@ class Pop3Client():
         mailNumber = mailNumber[ : end]
         while True:
             # if marked to be deleted
-            connection = checkConnectionState(self.ssl_sock)
+            connection = checkConnectionState(self.ssl_sock, self.QMainWindow)
             if connection:
                 return self.deleteMailCheckOK(mailNumber)
-            if connection == False: 
-                loginCheck = self.login(self.accInfo["popServer"], self.accInfo["popPort"], self.accInfo["smtpServer"], self.accInfo["smtpPort"], self.accInfo["login"], self.accInfo["password"])
-                if loginCheck:
-                    return self.deleteMailCheckOK(mailNumber)
+#            if connection == False: 
+#                loginCheck = self.login(self.accInfo["popServer"], self.accInfo["popPort"], self.accInfo["smtpServer"], self.accInfo["smtpPort"], self.accInfo["login"], self.accInfo["password"])
+#                if loginCheck:
+#                    return self.deleteMailCheckOK(mailNumber)
 
     def deleteMailCheckOK(self, mailNumber):
         time.sleep(2)
@@ -399,11 +404,8 @@ class Pop3Client():
     # Quits POP3 session
     def quit(self):
         try:
-            quitTest = checkConnectionState(self.ssl_sock)
-            if quitTest:
-                self.quitCheckOK()
-            else:
-                self.login(self.accInfo["popServer"], self.accInfo["popPort"], self.accInfo["smtpServer"], self.accInfo["smtpPort"], self.accInfo["login"], self.accInfo["password"])
+            connection = checkConnectionState(self.ssl_sock, self.QMainWindow)
+            if connection:
                 self.quitCheckOK()
         except: 
             print('Error while quitting')
@@ -414,6 +416,12 @@ class Pop3Client():
             self.ssl_sock.close()
             self.ssl_sock = None
             self.loggedIn = False
+
+    # Resets deletion marks
+    def resetDeletion(self):
+        connection = checkConnectionState(self.ssl_sock, self.QMainWindow)
+        if connection:
+            sendData(self.ssl_sock, 'RSET' + CRLF)
 
 
       

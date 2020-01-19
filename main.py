@@ -100,15 +100,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Button to go back to main window
         self.backToMainButton = QPushButton('<--', self)
-        self.backToMainButton.move(500, 25)
+        self.backToMainButton.move(400, 25)
         self.backToMainButton.hide()
         self.backToMainButton.clicked.connect(self.goBack)
 
         # Button to delete email
         self.deleteMailButton = QPushButton('Delete mail', self)
-        self.deleteMailButton.move(600, 25)
+        self.deleteMailButton.move(500, 25)
         self.deleteMailButton.hide()
         self.deleteMailButton.clicked.connect(self.deleteMailClicked)
+
+        # Button to reset deletion marks
+        self.resetMailButton = QPushButton('Reset marks', self)
+        self.resetMailButton.move(700, 25)
+        self.resetMailButton.hide()
+        self.resetMailButton.clicked.connect(self.pop3.resetDeletion)
         
         # Refresh mails
         self.refreshButton = QPushButton('Refresh', self)
@@ -155,6 +161,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.backToMainButton.hide()
         self.deleteMailButton.hide()
         self.sendMailButton.hide()
+        self.resetMailButton.hide()
 
     # Disabled for testing
     """
@@ -199,6 +206,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def deleteMailClicked(self):
         deleteSuccess = self.pop3.deleteEmail(self.listWidgetEmails.currentItem().text())
         if deleteSuccess:
+            # Removes the mail from the list widget
             self.listWidgetEmails.takeItem(self.listWidgetEmails.currentRow())
             self.goBack()
         else: 
