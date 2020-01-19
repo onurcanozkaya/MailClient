@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtWidgets import QApplication, QDesktopWidget, QPushButton, QToolTip, qApp, QMenu, QDialog,QAction, QDialogButtonBox, QFormLayout, QLabel, QLineEdit, QWidget, QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QVBoxLayout, QMessageBox
 
 # Some known POP3 and SMTP servers
 A = ['pop.gmail.com', 995, 'smtp.gmail.com', 465]
@@ -93,6 +93,10 @@ class LoginDialog(QDialog):
                 "login": self.username.text(),
                 "password": self.password.text()
             }
+    def reject(self):
+        self.mainWindow.loginButton.show()
+        self.hide()
+
             
 
     def exception(exctype, value, traceback):

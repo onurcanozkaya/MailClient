@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtWidgets import (QTextBrowser, QDialog, QWidget, QLabel, QMessageBox, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton, QAction, qApp, QMenu, QToolTip, QDesktopWidget)
+from PyQt5.QtWidgets import (QTextBrowser, QLabel, QMessageBox, QLineEdit, QApplication, QPushButton, QAction, qApp, QMenu, QDesktopWidget)
 from PyQt5.QtGui import QIcon, QFont
 from SendMailDialog import SendMailDialog as SendMailDialog
 from LoginDialog import LoginDialog as LoginDialog
@@ -34,9 +34,11 @@ class MainWindow(QtWidgets.QMainWindow):
         importFileAction = QAction('Import file', self) 
         importMenu.addAction(importFileAction)
         
-        newMailAction = QAction('New Mail', self)        
+        newMailAction = QAction('New Mail', self)
         
         fileMenu.addAction(newMailAction)
+        newMailAction.triggered.connect(self.sendMail)       
+
         fileMenu.addMenu(importMenu)
         
         viewMenu = menubar.addMenu('View')
@@ -133,6 +135,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def login(self):
         sender = self.sender()
         login = LoginDialog(parent=self, pop3=self.pop3, parentWindow=main)
+        self.loginButton.hide()
         login.show()
         if not login.exec_(): 
             self.statusBar().showMessage('Log in cancelled')
@@ -140,7 +143,6 @@ class MainWindow(QtWidgets.QMainWindow):
     # Shows send mail dialog
     def sendMail(self):
         sendMail = SendMailDialog(smtp=self.smtp, parent=main)
-        # SMTP
         sendMail.exec_()
         sendMail.show()
 
@@ -163,8 +165,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.sendMailButton.hide()
         self.resetMailButton.hide()
 
-    # Disabled for testing
-    """
+    
     # Asking to quit
     def closeEvent(self, event):
         # Message box
@@ -174,7 +175,7 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
         else:
             event.ignore()    
-    """
+  
 
     # To center window on start
     def center(self):

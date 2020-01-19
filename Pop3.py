@@ -312,7 +312,7 @@ def checkConnectionState(sock, window):
                 return True
     except:
         print('Connection is already closed')
-        QMessageBox.warning(window, 'Error', 'Bad user or password') 
+        QtWidgets.QMessageBox.warning(window, 'Error', 'Bad user or password') 
     
     
 
@@ -357,21 +357,25 @@ class Pop3Client():
         if self.loggedIn:
             self.getEmails()
         else:
-            QMessageBox.warning(self.QMainWindow, 'Error', 'Can not refresh emails')
+            QtWidgets.QMessageBox.warning(self.QMainWindow, 'Error', 'Can not refresh emails')
  
 
 
 
 
     def getEmails(self):
-        if self.loggedIn:
-            self.QMainWindow.listWidgetEmails.clear()
-            self.numberOfMails = numOfMails(self.ssl_sock)
-            self.QMainWindow.textBrowserNumEmails.setText(self.numberOfMails)
-            self.QMainWindow.textBrowserNumEmails.show()
-            self.QMainWindow.labelNumEmails.show()
-            retranslateUILoggedIn(self.QMainWindow, self.username)
-            listEmails(self.ssl_sock, self.QMainWindow)
+        try:
+            if self.loggedIn:
+                self.QMainWindow.listWidgetEmails.clear()
+                self.numberOfMails = numOfMails(self.ssl_sock)
+                self.QMainWindow.textBrowserNumEmails.setText(self.numberOfMails)
+                self.QMainWindow.textBrowserNumEmails.show()
+                self.QMainWindow.labelNumEmails.show()
+                retranslateUILoggedIn(self.QMainWindow, self.username)
+                listEmails(self.ssl_sock, self.QMainWindow)
+        except:
+            QMainWindow.loginButton.show()
+
        
     def retrieveMail(self, mailNum, window):
         sendDataMail(self.ssl_sock, 'RETR ' + mailNum+CRLF, window)
