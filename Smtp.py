@@ -10,7 +10,7 @@ from socket import gaierror
 class SmtpClient():
     def __init__(self, QMainWindow):
         self.QMainWindow = QMainWindow
-    
+
     def send_email(self, smtpServer, smtpPort, login, password, toUser, subject, msg):
         try: 
             server=smtplib.SMTP_SSL(smtpServer + ':' + smtpPort)
@@ -37,3 +37,6 @@ class SmtpClient():
             print('SMTP error occurred: '+ str(e))
             QtWidgets.QMessageBox.warning(self.QMainWindow, 'Error','SMTP error occurred: '+ str(e) )
 
+        except:
+            print('Fail')
+            return 0

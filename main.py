@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtWidgets import (QTextBrowser, QDialog, QWidget, QLabel, QMessageBox, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton, QAction, qApp, QMenu, QToolTip, QDesktopWidget)
+from PyQt5.QtWidgets import (QTextBrowser, QLabel, QMessageBox, QLineEdit, QApplication, QPushButton, QAction, qApp, QMenu, QDesktopWidget)
 from PyQt5.QtGui import QIcon, QFont
 from SendMailDialog import SendMailDialog as SendMailDialog
 from LoginDialog import LoginDialog as LoginDialog
@@ -34,9 +34,11 @@ class MainWindow(QtWidgets.QMainWindow):
         importFileAction = QAction('Import file', self) 
         importMenu.addAction(importFileAction)
         
-        newMailAction = QAction('New Mail', self)        
+        newMailAction = QAction('New Mail', self)
         
         fileMenu.addAction(newMailAction)
+        newMailAction.triggered.connect(self.sendMail)       
+
         fileMenu.addMenu(importMenu)
         
         viewMenu = menubar.addMenu('View')
@@ -86,7 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Mails
         self.listWidgetEmails = QtWidgets.QListWidget(self)
-        self.listWidgetEmails.setGeometry(QtCore.QRect(60, 90, 881, 521))
+        self.listWidgetEmails.setGeometry(QtCore.QRect(60, 90, 900, 600))
         self.listWidgetEmails.setObjectName("listWidgetEmails")
         self.listWidgetEmails.itemClicked.connect(self.showEmail)
         self.listWidgetEmails.hide()
@@ -94,27 +96,33 @@ class MainWindow(QtWidgets.QMainWindow):
         # Show mail 
         self.textBrowserShowMail = QtWidgets.QTextBrowser(self)
         self.textBrowserShowMail.setGeometry(QtCore.QRect(60, 90, 900, 600))
-        self.textBrowserShowMail.setFontPointSize(25)
+        self.textBrowserShowMail.setFontPointSize(20)
         self.textBrowserShowMail.setObjectName("textBrowserShowMail")
         self.textBrowserShowMail.hide()
 
         # Button to go back to main window
         self.backToMainButton = QPushButton('<--', self)
-        self.backToMainButton.move(500, 25)
+        self.backToMainButton.move(400, 25)
         self.backToMainButton.hide()
         self.backToMainButton.clicked.connect(self.goBack)
 
         # Button to delete email
         self.deleteMailButton = QPushButton('Delete mail', self)
-        self.deleteMailButton.move(600, 25)
+        self.deleteMailButton.move(500, 25)
         self.deleteMailButton.hide()
         self.deleteMailButton.clicked.connect(self.deleteMailClicked)
+
+        # Button to reset deletion marks
+        self.resetMailButton = QPushButton('Reset marks', self)
+        self.resetMailButton.move(700, 25)
+        self.resetMailButton.hide()
+        self.resetMailButton.clicked.connect(self.pop3.resetDeletion)
         
         # Refresh mails
         self.refreshButton = QPushButton('Refresh', self)
-        self.refreshButton.hide()
         self.refreshButton.move(800, 25)
-        self.refreshButton.clicked.connect(self.pop3.getEmails)
+        self.refreshButton.hide()
+        self.refreshButton.clicked.connect(self.pop3.relogin)
 
         # Main window configurations
         self.resize(1024, 768)
@@ -127,6 +135,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def login(self):
         sender = self.sender()
         login = LoginDialog(parent=self, pop3=self.pop3, parentWindow=main)
+        self.loginButton.hide()
         login.show()
         if not login.exec_(): 
             self.statusBar().showMessage('Log in cancelled')
@@ -134,11 +143,9 @@ class MainWindow(QtWidgets.QMainWindow):
     # Shows send mail dialog
     def sendMail(self):
         sendMail = SendMailDialog(smtp=self.smtp, parent=main)
-        # SMTP
         sendMail.exec_()
         sendMail.show()
 
-    # TODO Log out
     def logout(self):
         self.logoutButton.hide()
         self.loginButton.show()
@@ -156,9 +163,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.backToMainButton.hide()
         self.deleteMailButton.hide()
         self.sendMailButton.hide()
+        self.resetMailButton.hide()
 
-    # Disabled for testing
-    """
+    
     # Asking to quit
     def closeEvent(self, event):
         # Message box
@@ -168,7 +175,7 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
         else:
             event.ignore()    
-    """
+  
 
     # To center window on start
     def center(self):
@@ -188,7 +195,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.listWidgetEmails.hide()
         self.textBrowserShowMail.show()
-        self.refreshButton.hide()
         self.backToMainButton.show()
         self.deleteMailButton.show()
     
@@ -201,6 +207,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def deleteMailClicked(self):
         deleteSuccess = self.pop3.deleteEmail(self.listWidgetEmails.currentItem().text())
         if deleteSuccess:
+            # Removes the mail from the list widget
             self.listWidgetEmails.takeItem(self.listWidgetEmails.currentRow())
             self.goBack()
         else: 

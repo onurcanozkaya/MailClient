@@ -51,7 +51,6 @@ class SendMailDialog(QtWidgets.QDialog):
         self.show()
 
     def sendEmail(self):
-        self.parentWindow.statusBar().showMessage('Sending mail.')
         #self.smtpClient.login(self.parentWindow.accountInfo["smtpServer"], self.parentWindow.accountInfo["smtpPort"], self.parentWindow.accountInfo["login"], self.parentWindow.accountInfo["password"] )
         #self.smtpClient.sendEmail(self.senderAddr.text(), self.toEdit.text(), self.subjectEdit.text(), self.mailContentEdit.toPlainText())
         response = self.smtpClient.send_email(
@@ -68,6 +67,12 @@ class SendMailDialog(QtWidgets.QDialog):
 
         else:
             QMessageBox.warning(self, 'Error', 'Mail is not sent') 
+            self.parentWindow.statusBar().showMessage('Sent mail successfuly. Logged in as ' + self.parentWindow.accountInfo["login"])
+
+
+        else:
+            QMessageBox.warning(self, 'Error', 'Error while sending the email') 
+            self.parentWindow.statusBar().showMessage('Error while sending the email. Logged in as ' + self.parentWindow.accountInfo["login"])
 
     def exception(exctype, value, traceback):
         # Print the error and traceback
