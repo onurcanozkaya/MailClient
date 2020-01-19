@@ -2,6 +2,10 @@ import sys
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication, QDesktopWidget, QPushButton, QToolTip, qApp, QMenu, QDialog,QAction, QDialogButtonBox, QFormLayout, QLabel, QLineEdit, QWidget, QVBoxLayout, QMessageBox
 
+# Some known POP3 and SMTP servers
+A = ['pop.gmail.com', 995, 'smtp.gmail.com', 465]
+B = ['pop.yandex.com', 995, 'smtp.yandex.com', 465]
+
 class LoginDialog(QDialog):
     def __init__(self, parent=None, pop3=None, parentWindow=None):
         super(LoginDialog, self).__init__(parent)
@@ -18,12 +22,13 @@ class LoginDialog(QDialog):
         self.smtpServer = QLineEdit()
         self.smtpServerPort = QLineEdit()
         loginLayout = QFormLayout()
+        loginLayout.addRow("Username", self.username)
+        loginLayout.addRow("Password", self.password)
         loginLayout.addRow("POP3 Server", self.popServer)
         loginLayout.addRow("POP3 Server Port", self.popServerPort)
         loginLayout.addRow("SMTP Server", self.smtpServer)
         loginLayout.addRow("SMTP Server Port", self.smtpServerPort)
-        loginLayout.addRow("Username", self.username)
-        loginLayout.addRow("Password", self.password)
+
 
         self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttons.accepted.connect(self.check)
@@ -39,8 +44,25 @@ class LoginDialog(QDialog):
     def check(self):
         # Login check
         self.loginStatus = 0
+
+        # To match with stored servers
+        start = self.username.text().find('@')
+        mailAddr = self.username.text()
+        domain = mailAddr[start + 1: ]
+        
+        if not self.popServer.text() and not self.popServerPort.text() and not self.smtpServer.text() and not self.smtpServerPort.text():
+            if domain == 'gmail.com':
+                popServer, popPort, smtpServer, smtpPort = A
+            if domain == 'yandex.com':
+                popServer, popPort, smtpServer, smtpPort = B
+        else:
+            popServer = self.popServer.text()
+            popPort = self.popServerPort.text()
+            smtpServer = self.smtpServer.text()
+            smtpPort = self.smtpServerPort.text()
+
         try:
-            self.loginStatus = self.pop3client.login(self.popServer.text(), self.popServerPort.text(), self.smtpServer.text(), self.smtpServerPort.text(), self.username.text(), self.password.text()) 
+            self.loginStatus = self.pop3client.login(popServer, popPort, smtpServer, smtpPort, self.username.text(), self.password.text()) 
 
             if self.loginStatus: 
                 self.accept()
@@ -56,7 +78,6 @@ class LoginDialog(QDialog):
         # If login successful request emails
         if self.loginStatus:
             self.pop3client.getEmails()
-
             self.mainWindow.statusBar().showMessage('Logged in as ' + self.username.text())
             self.mainWindow.sendMailButton.show()
             self.mainWindow.logoutButton.show()
@@ -64,10 +85,10 @@ class LoginDialog(QDialog):
 
             # Save login configuration to use with smtp
             self.mainWindow.accountInfo = {
-                "popServer": self.popServer.text(),
-                "popPort": self.popServerPort.text(),
-                "smtpServer": self.smtpServer.text(),
-                "smtpPort": self.smtpServerPort.text(),
+                "popServer": popServer,
+                "popPort": popPort,
+                "smtpServer": smtpServer,
+                "smtpPort": smtpPort,
                 "login": self.username.text(),
                 "password": self.password.text()
             }

@@ -112,9 +112,9 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # Refresh mails
         self.refreshButton = QPushButton('Refresh', self)
-        self.refreshButton.hide()
         self.refreshButton.move(800, 25)
-        self.refreshButton.clicked.connect(self.pop3.getEmails)
+        self.refreshButton.hide()
+        self.refreshButton.clicked.connect(self.pop3.relogin)
 
         # Main window configurations
         self.resize(1024, 768)
@@ -188,7 +188,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.listWidgetEmails.hide()
         self.textBrowserShowMail.show()
-        self.refreshButton.hide()
         self.backToMainButton.show()
         self.deleteMailButton.show()
     

@@ -38,7 +38,6 @@ def extractHeaders(message, number, window):
     end = message.find('\n', start+1)
     header += message[start : end]
 
-    print("Mail Header: " + header)
     window.listWidgetEmails.show()
     window.listWidgetEmails.addItem(header)
 
@@ -85,7 +84,7 @@ def extractEmailContent(email, window):
     start = message.find('\nDate:') 
     end = message.find('\n', start+1)
     mailContent += message[start : end]
-
+    
     start = message.find('\nFrom:') 
     end = message.find('\n', start+1)
     mailContent += message[start : end]
@@ -100,7 +99,11 @@ def extractEmailContent(email, window):
 
     mailContent += '\n===================================='
 
-    # If the mail is sent from Gmail
+
+    
+
+
+    # Mail coming from webmail of Gmail
     if '\nContent-Type: text/plain; charset="UTF-8"' in message:
         start = message.find('\nContent-Type: text/plain; charset="UTF-8"') 
         end = message.find('\n--', start + 1)
@@ -110,20 +113,41 @@ def extractEmailContent(email, window):
     # TODO HTML
     # TODO ATTACHMENTS 
 
+    # Mail coming from W10 app with Gmail
+    elif '\nContent-Type: text/plain; charset="utf-8"' in message:
+        start = message.find('\nContent-Type: text/plain; charset="utf-8"') 
+        end = message.find('\n--', start + 1)
+        length = len('\nContent-Type: text/plain; charset="utf-8"')
+        mailContent += message[start + length : end]
+        window.textBrowserShowMail.setText(mailContent)
+        
     # If the mail is sent from iOS Mail
     elif '\nContent-Type: text/plain; charset=utf-8' in message:
         if '\nX-Mailer: iPhone Mail (17C54)' in message:
             start = message.find('\nX-Mailer: iPhone Mail (17C54)')
             end = message.find('\n.', start + 1)
-
             length = len('\nX-Mailer: iPhone Mail (17C54)')
-            mailContent += message[start + length : end]
+            if 'X-Yandex-Forward:' in message:
+                start = message.find('\nX-Yandex-Forward:')
+                end = message.find('\n.', start + 1)
+                tempMsg = message[start : end]
+                start = tempMsg.find(CRLF)
+                mailContent += tempMsg[start : end]
+                window.textBrowserShowMail.setText(mailContent)
+            else:
+                mailContent += message[start + length : end]
+                window.textBrowserShowMail.setText(mailContent)
+        if 'X-Yandex-Forward:' in message:
+            start = message.find('\nX-Yandex-Forward:')
+            end = message.find('\n.', start + 1)
+            start = message[start : end].find(CRLF)
+            mailContent += message[start : end]
             window.textBrowserShowMail.setText(mailContent)
         else: 
-            print(message)
+            window.textBrowserShowMail.setText(message)
 
 
-    # If the mail is sent from Windows Mail
+    # If the mail is sent from Windows Mail or ios outlook
     elif '\nContent-Type: text/plain; charset="us-ascii"' in message:
         start = message.find('\nContent-Type: text/plain; charset="us-ascii"') 
         end = message.find('\n--', start + 1)
@@ -133,15 +157,63 @@ def extractEmailContent(email, window):
             length = len('\nContent-Transfer-Encoding: quoted-printable')
             mailContent += message[start + length : end]
             window.textBrowserShowMail.setText(mailContent)
+        if '\nX-Mailer: iPhone Mail (17C54)' in message:
+            start = message.find('\nX-Mailer: iPhone Mail (17C54)')
+            end = message.find('\n.', start + 1)
+            length = len('\nX-Mailer: iPhone Mail (17C54)')
+            if 'X-Yandex-Forward:' in message:
+                start = message.find('\nX-Yandex-Forward:')
+                end = message.find('\n.', start + 1)
+                tempMsg = message[start : end]
+                start = tempMsg.find(CRLF)
+                mailContent += tempMsg[start : end]
+                window.textBrowserShowMail.setText(mailContent)
+            else:
+                mailContent += message[start + length : end]
+                window.textBrowserShowMail.setText(mailContent)
+
+    elif '\nContent-Type: text/plain; charset=us-ascii' in message:
+        if '\nContent-Transfer-Encoding: quoted-printable' in message[start : end]:
+            start = message.find('\nContent-Transfer-Encoding: quoted-printable')
+            length = len('\nContent-Transfer-Encoding: quoted-printable')
+            mailContent += message[start + length : end]
+            window.textBrowserShowMail.setText(mailContent)
+        if '\nX-Mailer: iPhone Mail (17C54)' in message:
+            start = message.find('\nX-Mailer: iPhone Mail (17C54)')
+            end = message.find('\n.', start + 1)
+            length = len('\nX-Mailer: iPhone Mail (17C54)')
+            if 'X-Yandex-Forward:' in message:
+                start = message.find('\nX-Yandex-Forward:')
+                end = message.find('\n.', start + 1)
+                tempMsg = message[start : end]
+                start = tempMsg.find(CRLF)
+                mailContent += tempMsg[start : end]
+                window.textBrowserShowMail.setText(mailContent)
+            else:
+                mailContent += message[start + length : end]
+                window.textBrowserShowMail.setText(mailContent)
+
+
+    elif '\nContent-Type: text/plain; charset="iso-8859-1"' in message:
+        start = message.find('\nContent-Type: text/plain; charset="iso-8859-1"')
+        end = message.find('\n--')
+        tempMsg = message[start : end]
+        if '\nContent-Transfer-Encoding: quoted-printable' in tempMsg:
+            start = start + len('Content-Transfer-Encoding: quoted-printable')
+            mailContent += tempMsg
+        else:
+            mailContent += message
+            window.textBrowserShowMail.setText(message)
 
     else:
-        print(message)
+        window.textBrowserShowMail.setText(message)
+
 
 
 # Get number of mails in the maildrop - STAT command
 def numOfMails(sock):
     num = sendData(sock, 'STAT' + CRLF)
-    #print('STAT response:', num)
+    print('STAT response:', num)
     num = (str(num, 'utf-8'))
     start = num.find(' ')
     end = num.find(' ', start + 1)
@@ -156,8 +228,6 @@ def listEmails(sock, window):
 
     while True: 
         buff = sock.recv(4096)
-        
-        print(buff)
         buff = (str(buff, 'utf-8'))
         listMailResponse += buff
         if '\n.\r' in listMailResponse:
@@ -188,13 +258,7 @@ def listHeaders(sock, message, window):
 def retranslateUILoggedIn(QMainWindow, username):
     QMainWindow.loginButton.hide()
     #QMainWindow.statusBar().showMessage('Logged in pop3' + username)
-    print(' ')
 
-
-
-# for test purposes 
-def saveAccountInfo(QMainWindow, accInfo):
-    QMainWindow.accountInfo = accInfo
 
 # Checks connection state with NOOP f.e Yandex POP returns -ERR for all commands after RETR command       
 def checkConnectionState(sock):
@@ -218,8 +282,6 @@ class Pop3Client():
         self.ssl_sock = wrap_socket(sock)
         self.ssl_sock.settimeout(TIMEOUT)
 
-  
-
         # to test UI
         self.accInfo = {
             "popServer": popServer,
@@ -239,7 +301,19 @@ class Pop3Client():
         sendData(self.ssl_sock, 'USER ' + login + CRLF)
         data=sendData(self.ssl_sock, 'PASS ' + password + CRLF)
         if(data.startswith(b'+OK')):
-            return 1 
+            return True 
+
+    def relogin(self):
+        self.quit()
+        self.loggedIn = self.login(self.accInfo["popServer"], self.accInfo["popPort"], self.accInfo["smtpServer"], self.accInfo["smtpPort"], self.accInfo["login"], self.accInfo["password"])
+        if self.loggedIn:
+            self.getEmails()
+        else:
+            QMessageBox.warning(self.QMainWindow, 'Error', 'Can not refresh emails')
+ 
+
+
+
 
     def getEmails(self):
         if self.loggedIn:
@@ -248,8 +322,6 @@ class Pop3Client():
             self.QMainWindow.textBrowserNumEmails.setText(self.numberOfMails)
             self.QMainWindow.textBrowserNumEmails.show()
             self.QMainWindow.labelNumEmails.show()
-            # delete following line when tests are done
-            saveAccountInfo(self.QMainWindow, self.accInfo)
             retranslateUILoggedIn(self.QMainWindow, self.username)
             listEmails(self.ssl_sock, self.QMainWindow)
        
@@ -260,7 +332,6 @@ class Pop3Client():
     def deleteEmail(self, mailNumber): 
         end = mailNumber.find('\n')
         mailNumber = mailNumber[ : end]
-        print('mail number: ' + str(mailNumber))
         while True:
             # if marked to be deleted
             connection = checkConnectionState(self.ssl_sock)
@@ -273,7 +344,6 @@ class Pop3Client():
 
     def deleteMailCheckOK(self, mailNumber):
         time.sleep(2)
-        print('DELE '+ mailNumber + CRLF)
         deleteAttemptSuccess = sendData(self.ssl_sock, 'DELE ' + mailNumber + CRLF)
         if deleteAttemptSuccess:
             tempNum = int(self.numberOfMails)
@@ -285,7 +355,6 @@ class Pop3Client():
 
     # Quits POP3 session
     def quit(self):
-        print('Client sent: NOOP')
         quitTest = checkConnectionState(self.ssl_sock)
         if quitTest:
             self.quitCheckOK()
@@ -294,7 +363,6 @@ class Pop3Client():
             self.quitCheckOK()
 
     def quitCheckOK(self):
-        print('Client sent: QUIT')
         data = sendData(self.ssl_sock, 'QUIT' + CRLF)
         if(data.startswith(b'+OK')):
             self.ssl_sock.close()
