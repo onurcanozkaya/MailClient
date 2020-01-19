@@ -88,7 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Mails
         self.listWidgetEmails = QtWidgets.QListWidget(self)
-        self.listWidgetEmails.setGeometry(QtCore.QRect(60, 90, 881, 521))
+        self.listWidgetEmails.setGeometry(QtCore.QRect(60, 90, 900, 600))
         self.listWidgetEmails.setObjectName("listWidgetEmails")
         self.listWidgetEmails.itemClicked.connect(self.showEmail)
         self.listWidgetEmails.hide()
@@ -96,7 +96,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Show mail 
         self.textBrowserShowMail = QtWidgets.QTextBrowser(self)
         self.textBrowserShowMail.setGeometry(QtCore.QRect(60, 90, 900, 600))
-        self.textBrowserShowMail.setFontPointSize(25)
+        self.textBrowserShowMail.setFontPointSize(20)
         self.textBrowserShowMail.setObjectName("textBrowserShowMail")
         self.textBrowserShowMail.hide()
 

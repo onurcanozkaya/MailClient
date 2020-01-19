@@ -5,6 +5,8 @@ from ssl import wrap_socket
 import time
 import base64
 import mailparser
+from AttachmentDialog import AttachmentDialog as AttachmentDialog
+
 
 ENCODING = 'utf-8'
 TIMEOUT = 20
@@ -65,6 +67,8 @@ def sendDataHeader(sock, data, window, number):
 
     except:
         print('Error while requesting mail headers')
+        QtWidgets.QMessageBox.warning(window, 'Error', 'Error while requesting mail headers') 
+
 
 # Send RETR command to retrieve mail
 def sendDataMail(sock, data, window):
@@ -89,6 +93,8 @@ def sendDataMail(sock, data, window):
 
     except:
         print('Error while requesting mail data')
+        QtWidgets.QMessageBox.warning(window, 'Error', 'Error while requesting mail data') 
+
 
 def extractEmailContent(email, window):
     message = email
@@ -110,6 +116,10 @@ def extractEmailContent(email, window):
     except: 
         mTo = mFrom
     try:
+        mCC = 'CC: ' + header["CC"] + '\n'
+    except:
+        mCC = ''
+    try:
         mSubject = header["Subject"]
     except: 
         mSubject = 'Error'
@@ -117,6 +127,8 @@ def extractEmailContent(email, window):
     mailContent += 'Date: ' + mDate + CRLF
     mailContent += 'From: ' + mFrom + CRLF
     mailContent += 'To: ' + mTo + CRLF
+    if mCC:
+        mailContent += mCC
     mailContent += 'Subject: ' +mSubject + CRLF
     mailContent += '\nMail content:\n'
     # Mail body
@@ -132,6 +144,7 @@ def extractEmailContent(email, window):
         for i in range(len(attachments)):
             attachment = attachments[i]
             attachmentData = attachment["payload"]
+            attachmentContentType = attachment["mail_content_type"]
             filename = attachment["filename"]
             mailContent += CRLF + CRLF + 'Attachment: ' + filename
             # Save attachments
@@ -139,9 +152,17 @@ def extractEmailContent(email, window):
                 imgdata = base64.b64decode(attachmentData)
                 with open(filename, 'wb') as f:
                     f.write(imgdata)
+                # Trying to open attachment if it is image
+                try:
+                    attachmentWindow = AttachmentDialog(parent=window, filename=filename)
+                except: 
+                    print('Can not open attachment')
+           
             except:
                 print('Error while saving attachment')
-   
+                QtWidgets.QMessageBox.warning(window, 'Error', 'Error while saving attachment') 
+
+        
     window.textBrowserShowMail.setText(mailContent)
 
 # Get number of mails in the maildrop - STAT command
@@ -201,7 +222,7 @@ def checkConnectionState(sock, window):
                 return True
     except:
         print('Connection is already closed')
-        QtWidgets.QMessageBox.warning(window, 'Error', 'Bad user or password') 
+        QtWidgets.QMessageBox.warning(window, 'Error', 'Connection is closed') 
     
 class Pop3Client():
     def __init__(self, QMainWindow):
@@ -267,49 +288,47 @@ class Pop3Client():
     def deleteEmail(self, mailNumber): 
         end = mailNumber.find('\n')
         mailNumber = mailNumber[ : end]
-        while True:
-            # if marked to be deleted
-            connection = checkConnectionState(self.ssl_sock, self.QMainWindow)
-            if connection:
-                return self.deleteMailCheckOK(mailNumber)
-#            if connection == False: 
-#                loginCheck = self.login(self.accInfo["popServer"], self.accInfo["popPort"], self.accInfo["smtpServer"], self.accInfo["smtpPort"], self.accInfo["login"], self.accInfo["password"])
-#                if loginCheck:
-#                    return self.deleteMailCheckOK(mailNumber)
+        try:
+            while True:
+                # if marked to be deleted
+                if not b'-ERR' in sendData(self.ssl_sock, 'DELE ' + mailNumber + CRLF):
+                    tempNum = int(self.numberOfMails)
+                    tempNum -= 1
+                    self.numberOfMails = str(tempNum)
+                    self.QMainWindow.textBrowserNumEmails.setText(self.numberOfMails)
+                    return True
+        except: 
+            QtWidgets.QMessageBox.warning(self.QMainWindow, 'Error', 'Error while marking for deletion')
 
-    def deleteMailCheckOK(self, mailNumber):
-        time.sleep(2)
-        deleteAttemptSuccess = sendData(self.ssl_sock, 'DELE ' + mailNumber + CRLF)
-        if deleteAttemptSuccess:
-            tempNum = int(self.numberOfMails)
-            tempNum -= 1
-            self.numberOfMails = str(tempNum)
-            self.QMainWindow.textBrowserNumEmails.setText(self.numberOfMails)
-            return True
-        return False
+
 
     # Quits POP3 session
     def quit(self):
         try:
-            connection = checkConnectionState(self.ssl_sock, self.QMainWindow)
-            if connection:
-                self.quitCheckOK()
+            while True:
+                data = sendData(self.ssl_sock, 'QUIT' + CRLF)
+                if(data.startswith(b'+OK')):
+                    self.ssl_sock.close()
+                    self.ssl_sock = None
+                    self.loggedIn = False
+                    break
+            
         except: 
             print('Error while quitting')
 
-    # If connection is not closed or aborted already
-    def quitCheckOK(self):
-        data = sendData(self.ssl_sock, 'QUIT' + CRLF)
-        if(data.startswith(b'+OK')):
-            self.ssl_sock.close()
-            self.ssl_sock = None
-            self.loggedIn = False
-
     # Resets deletion marks
     def resetDeletion(self):
-        connection = checkConnectionState(self.ssl_sock, self.QMainWindow)
-        if connection:
-            sendData(self.ssl_sock, 'RSET' + CRLF)
+        try:
+            while True:
+                if not b'-ERR' in sendData(self.ssl_sock, 'RSET' + CRLF):
+                    print('reset marks ok')
+                    return True
+        except:
+            print('Error while resetting ')
+            QtWidgets.QMessageBox.warning(self.QMainWindow, 'Error', 'Error while resetting deletion marks')
+
+
+
 
 
       
