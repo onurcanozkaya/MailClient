@@ -138,7 +138,6 @@ class MainWindow(QtWidgets.QMainWindow):
         sendMail.exec_()
         sendMail.show()
 
-    # TODO Log out
     def logout(self):
         self.logoutButton.hide()
         self.loginButton.show()

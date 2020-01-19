@@ -4,9 +4,10 @@ import sys
 from ssl import wrap_socket
 import time
 import base64
+import mailparser
 
 ENCODING = 'utf-8'
-TIMEOUT = 2
+TIMEOUT = 20
 CRLF = "\r\n"
 
 # Sends data to a given socket.
@@ -43,66 +44,110 @@ def extractHeaders(message, number, window):
 
 def sendDataHeader(sock, data, window, number):
     """Sends data to a given socket."""
-    sock.send((data).encode(ENCODING))
-    print("Client sent: " + str((data).encode(ENCODING)))
-     
-    response = ''
-   
-    while True:
-        buff = sock.recv(4096)
-        buff = (str(buff, 'utf-8'))
-        response += buff
-        
-        #print("TOP command response: " + str(response))
-        
-        # End of message
-        if '\n.\r' in response:
-            break
-   
-    extractHeaders(response, number, window)
+    try:
+        sock.send((data).encode(ENCODING))
+        print("Client sent: " + str((data).encode(ENCODING)))
+            
+        response = ''
+
+        while True:
+            buff = sock.recv(4096)
+            buff = (str(buff, 'utf-8'))
+            response += buff
+            
+            #print("TOP command response: " + str(response))
+            
+            # End of message
+            if '\n.\r' in response:
+                break
+
+        extractHeaders(response, number, window)
+
+    except:
+        print('Error while requesting mail headers')
 
 # Send RETR command to retrieve mail
 def sendDataMail(sock, data, window):
-    sock.send((data).encode(ENCODING))
-    print('Client sent: ' + str(data))
+    try:
+        sock.send((data).encode(ENCODING))
+        print('Client sent: ' + str(data))
+        error = 0
+        response = ''
+        while True:
+            buff = sock.recv(4096)
+            buff = (str(buff, 'utf-8'))
+            response += buff
 
-    response = ''
-    while True:
-        buff = sock.recv(4096)
-        buff = (str(buff, 'utf-8'))
-        response += buff
+            if '\n.\r' in response:
+                break
 
-        if '\n.\r' in response:
-            break
+        start = response.find('+OK')
+        tempData = response[start : ]
+        start = tempData.find(CRLF)
+        receivedData = tempData[start + len(CRLF) :]
+        extractEmailContent(receivedData, window)
 
-    extractEmailContent(response, window)
+    except:
+        print('Error while requesting mail data')
 
 def extractEmailContent(email, window):
     message = email
     mailContent = ''
+    mail = mailparser.parse_from_string(message)
 
-    start = message.find('\nDate:') 
-    end = message.find('\n', start+1)
-    mailContent += message[start : end]
-    
-    start = message.find('\nFrom:') 
-    end = message.find('\n', start+1)
-    mailContent += message[start : end]
+    # Mail headers
+    header = mail.headers
+    try: 
+        mDate = header["Date"]
+    except:
+        mDate = 'Error'
+    try:
+        mFrom = header["From"]
+    except:
+        mFrom = 'Error'
+    try:
+        mTo = header["To"]
+    except: 
+        mTo = mFrom
+    try:
+        mSubject = header["Subject"]
+    except: 
+        mSubject = 'Error'
 
-    start = message.find('\nTo:') 
-    end = message.find('\n', start + 1)
-    mailContent += message[start : end]
+    mailContent += 'Date: ' + mDate + CRLF
+    mailContent += 'From: ' + mFrom + CRLF
+    mailContent += 'To: ' + mTo + CRLF
+    mailContent += 'Subject: ' +mSubject + CRLF
+    mailContent += '\nMail content:\n'
+    # Mail body
+    mBody = mail.text_plain
+    try:
+        mailContent += mBody[0]
+    except:
+        mailContent = 'Something went wrong'
 
-    start = message.find('\nSubject:') 
-    end = message.find('\n', start + 1)
-    mailContent += message[start : end]
+    # Checking email attachments
+    attachments = mail.attachments
+    if attachments:
+        for i in range(len(attachments)):
+            attachment = attachments[i]
+            attachmentData = attachment["payload"]
+            filename = attachment["filename"]
+            mailContent += CRLF + CRLF + 'Attachment: ' + filename
+            # Save attachments
+            try:
+                imgdata = base64.b64decode(attachmentData)
+                with open(filename, 'wb') as f:
+                    f.write(imgdata)
+            except:
+                print('Error while saving attachment')
+   
 
-    mailContent += '\n===================================='
+    window.textBrowserShowMail.setText(mailContent)
 
 
-    
-
-
+    # Delete the next comment block
+    """
     # Mail coming from webmail of Gmail
     if '\nContent-Type: text/plain; charset="UTF-8"' in message:
         start = message.find('\nContent-Type: text/plain; charset="UTF-8"') 
@@ -110,8 +155,6 @@ def extractEmailContent(email, window):
         length = len('\nContent-Type: text/plain; charset="UTF-8"')
         mailContent += message[start + length : end]
         window.textBrowserShowMail.setText(mailContent)
-    # TODO HTML
-    # TODO ATTACHMENTS 
 
     # Mail coming from W10 app with Gmail
     elif '\nContent-Type: text/plain; charset="utf-8"' in message:
@@ -208,6 +251,7 @@ def extractEmailContent(email, window):
     else:
         window.textBrowserShowMail.setText(message)
 
+    """
 
 
 # Get number of mails in the maildrop - STAT command
@@ -254,7 +298,6 @@ def listHeaders(sock, message, window):
         message = message[message.find('\n') : ]
 
 
-# TODO Changes in the UI while logged in
 def retranslateUILoggedIn(QMainWindow, username):
     QMainWindow.loginButton.hide()
     #QMainWindow.statusBar().showMessage('Logged in pop3' + username)
@@ -355,12 +398,15 @@ class Pop3Client():
 
     # Quits POP3 session
     def quit(self):
-        quitTest = checkConnectionState(self.ssl_sock)
-        if quitTest:
-            self.quitCheckOK()
-        else:
-            self.login(self.accInfo["popServer"], self.accInfo["popPort"], self.accInfo["smtpServer"], self.accInfo["smtpPort"], self.accInfo["login"], self.accInfo["password"])
-            self.quitCheckOK()
+        try:
+            quitTest = checkConnectionState(self.ssl_sock)
+            if quitTest:
+                self.quitCheckOK()
+            else:
+                self.login(self.accInfo["popServer"], self.accInfo["popPort"], self.accInfo["smtpServer"], self.accInfo["smtpPort"], self.accInfo["login"], self.accInfo["password"])
+                self.quitCheckOK()
+        except: 
+            print('Error while quitting')
 
     def quitCheckOK(self):
         data = sendData(self.ssl_sock, 'QUIT' + CRLF)
