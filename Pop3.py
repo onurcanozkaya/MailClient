@@ -136,7 +136,7 @@ def extractEmailContent(email, window):
     try:
         mailContent += mBody[0]
     except:
-        mailContent = 'Something went wrong'
+        mailContent += 'Something went wrong'
 
     # Checking email attachments
     attachments = mail.attachments
@@ -154,7 +154,8 @@ def extractEmailContent(email, window):
                     f.write(imgdata)
                 # Trying to open attachment if it is image
                 try:
-                    attachmentWindow = AttachmentDialog(parent=window, filename=filename)
+                    if attachmentContentType == 'image/jpeg':
+                        attachmentWindow = AttachmentDialog(parent=window, filename=filename)
                 except: 
                     print('Can not open attachment')
            

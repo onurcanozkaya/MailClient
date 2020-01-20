@@ -5,19 +5,63 @@ import socket
 import sys
 import time
 import base64
+from os.path import basename
 from socket import gaierror
+import imghdr 
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from email.mime.image import MIMEImage
+from email.utils import formatdate
+from email import encoders
 
 class SmtpClient():
     def __init__(self, QMainWindow):
         self.QMainWindow = QMainWindow
 
-    def send_email(self, smtpServer, smtpPort, login, password, toUser, subject, msg):
+    def send_email(self, smtpServer, smtpPort, login, password, toUser, subject, content, attachmentFileLocation):
+        
+        msg = MIMEMultipart()
+        msg['Subject'] = subject
+        msg['From'] = login
+        msg['To'] = toUser
+        
+    
+        fileType = ''
+
+        msg.attach(MIMEText(content, 'plain'))
+        
+        if attachmentFileLocation:
+            #files=['hi.jpg']
+            # Content-Type: image/jpeg
+            for f in attachmentFileLocation or []:
+                if '.jpg' in f:
+                    fileType = 'jpeg'
+                    with open(f, "rb") as fil:
+                        part = MIMEImage(
+                        fil.read(),
+                        _subtype=fileType,
+                        Name=basename(f)
+                        )
+                else:
+                    with open(f, "rb") as fil:
+                        part = MIMEApplication(
+                        fil.read(),
+                        _subtype=fileType,
+                        Name=basename(f)
+                        )
+                part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
+                msg.attach(part)
+
+
         try: 
             server=smtplib.SMTP_SSL(smtpServer + ':' + str(smtpPort))
             server.ehlo()
+            recipients = toUser.split(',')
             server.login(login, password)
-            message ='Subject: {}\n\n{}'.format (subject,msg)
-            server.sendmail(login, toUser, message)
+            server.sendmail(login, recipients,msg.as_string())
             server.quit()
             print('success')
             return 1
