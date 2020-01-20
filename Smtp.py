@@ -16,6 +16,7 @@ from email.mime.application import MIMEApplication
 from email.mime.image import MIMEImage
 from email.utils import formatdate
 from email import encoders
+from socket import gaierror
 
 class SmtpClient():
     def __init__(self, QMainWindow):
@@ -54,7 +55,6 @@ class SmtpClient():
                         )
                 part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
                 msg.attach(part)
-
 
         try: 
             server=smtplib.SMTP_SSL(smtpServer + ':' + str(smtpPort))
