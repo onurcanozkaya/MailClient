@@ -154,7 +154,7 @@ def extractEmailContent(email, window):
                     f.write(imgdata)
                 # Trying to open attachment if it is image
                 try:
-                    if attachmentContentType == 'image/jpeg':
+                    if attachmentContentType == 'image/jpeg' or attachmentContentType == 'image/png':
                         attachmentWindow = AttachmentDialog(parent=window, filename=filename)
                 except: 
                     print('Can not open attachment')

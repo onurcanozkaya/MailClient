@@ -58,10 +58,10 @@ class SendMailDialog(QtWidgets.QDialog):
         grid.addWidget(subject, 3, 0)
         grid.addWidget(self.subjectEdit, 3, 1)
 
-        grid.addWidget(mailContent, 4, 0)
-        grid.addWidget(self.mailContentEdit, 4, 1, 5, 1)
+        grid.addWidget(mailContent, 4, 0, 1, 2)
+        grid.addWidget(self.mailContentEdit, 5, 0, 1, 2)
 
-        grid.addWidget(self.addAttachmentButton, 5, 0)
+        grid.addWidget(self.addAttachmentButton, 6, 0)
 
         grid.addWidget(self.attachLabel, 7, 0)
         grid.addWidget(self.attachmentFirst, 7, 1)

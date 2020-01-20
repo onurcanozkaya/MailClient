@@ -46,6 +46,14 @@ class SmtpClient():
                         _subtype=fileType,
                         Name=basename(f)
                         )
+                if '.png' in f:
+                    fileType = 'png'
+                    with open(f, "rb") as fil:
+                        part = MIMEImage(
+                        fil.read(),
+                        _subtype=fileType,
+                        Name=basename(f)
+                        )
                 else:
                     with open(f, "rb") as fil:
                         part = MIMEApplication(
